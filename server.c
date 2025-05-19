@@ -62,16 +62,17 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        Message msg;
+        Message* msg = malloc(sizeof(Message));
         ssize_t bytes_received;
 
         // Receive messages until client disconnects
-        while ((bytes_received = recv(new_socket, &msg, sizeof(Message), 0)) > 0) {
+        while ((bytes_received = recv(new_socket, msg, sizeof(Message), 0)) > 0) {
             // Send acknowledgment
             send(new_socket, "OK", 2, 0);
         }
 
         close(new_socket);
+        free(msg);
     }
 
     close(server_fd);

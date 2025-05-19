@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     const char *host = DEFAULT_HOST;
     int port = DEFAULT_PORT;
     char buffer[2];
-    Message msg;
+    Message* msg = malloc(sizeof(Message));
     struct timespec start, end;
     double total_time;
 
@@ -63,12 +63,12 @@ int main(int argc, char *argv[]) {
 
     // Test message sizes from 1 byte to 1MB (exponentially increasing)
     for (size_t size = 1; size <= MAX_MSG_SIZE; size *= 2) {
-        msg.size = size;
-        memset(msg.data, 'A', size); // Fill with test data
+        msg->size = size;
+        memset(msg->data, 'A', size); // Fill with test data
 
         // Warm-up cycles
         for (int i = 0; i < WARMUP_CYCLES; i++) {
-            send(sock, &msg, sizeof(Message), 0);
+            send(sock, msg, size + sizeof(size_t), 0);
             recv(sock, buffer, sizeof(buffer), 0);
         }
 
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
         total_time = 0;
         for (int i = 0; i < MEASUREMENT_CYCLES; i++) {
             clock_gettime(CLOCK_MONOTONIC, &start);
-            send(sock, &msg, sizeof(Message), 0);
+            send(sock, msg, sizeof(size_t) + size, 0);
             recv(sock, buffer, sizeof(buffer), 0);
             clock_gettime(CLOCK_MONOTONIC, &end);
 
@@ -91,5 +91,6 @@ int main(int argc, char *argv[]) {
     }
 
     close(sock);
+    free(msg);
     return 0;
 }
