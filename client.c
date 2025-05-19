@@ -8,7 +8,7 @@ void print_usage(const char *program_name) {
 }
 
 double calculate_throughput(size_t bytes, double seconds) {
-    return (bytes * 8.0) / (seconds * 1000000.0); // Convert to Mbps
+    return (bytes * BITS_IN_BYTE) / (seconds * MEGA); // Convert to Mbps
 }
 
 void print_throughput(size_t size, double throughput) {

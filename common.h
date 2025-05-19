@@ -16,6 +16,8 @@
 #define MAX_MSG_SIZE (1024 * 1024)  // 1MB
 #define WARMUP_CYCLES 3             // Number of warm-up cycles before actual measurements
 #define MEASUREMENT_CYCLES 5        // Number of measurement cycles per message size
+#define BITS_IN_BYTE 8.0
+#define MEGA 1000000.0
 
 // Message structure for communication
 typedef struct {
