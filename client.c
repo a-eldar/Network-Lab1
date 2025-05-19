@@ -66,27 +66,29 @@ int main(int argc, char *argv[]) {
         msg->size = size;
         memset(msg->data, 'A', size); // Fill with test data
 
-        // Warm-up cycles
-        for (int i = 0; i < WARMUP_CYCLES; i++) {
-            send(sock, msg, size + sizeof(size_t), 0);
-            recv(sock, buffer, sizeof(buffer), 0);
-        }
-
-        // Measurement cycles
-        total_time = 0;
+        // Send warmup messages
         for (int i = 0; i < MEASUREMENT_CYCLES; i++) {
-            clock_gettime(CLOCK_MONOTONIC, &start);
             send(sock, msg, sizeof(size_t) + size, 0);
-            recv(sock, buffer, sizeof(buffer), 0);
-            clock_gettime(CLOCK_MONOTONIC, &end);
-
-            total_time += (end.tv_sec - start.tv_sec) + 
-                         (end.tv_nsec - start.tv_nsec) / 1e9;
         }
+        // Start timing after warm-up
+        clock_gettime(CLOCK_MONOTONIC, &start);
+
+        // Send all messages (measurement)
+        for (int i = 0; i < MEASUREMENT_CYCLES; i++) {
+            send(sock, msg, sizeof(size_t) + size, 0);
+        }
+
+        // Wait for single OK response
+        recv(sock, buffer, sizeof(buffer), 0);
+        
+        clock_gettime(CLOCK_MONOTONIC, &end);
+
+        // Calculate total time
+        total_time = (end.tv_sec - start.tv_sec) + 
+                    (end.tv_nsec - start.tv_nsec) / 1e9;
 
         // Calculate and print average throughput
-        double avg_time = total_time / MEASUREMENT_CYCLES;
-        double throughput = calculate_throughput(size, avg_time);
+        double throughput = calculate_throughput(size * (MEASUREMENT_CYCLES), total_time);
         print_throughput(size, throughput);
     }
 

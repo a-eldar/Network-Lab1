@@ -64,15 +64,27 @@ int main(int argc, char *argv[]) {
 
         Message* msg = malloc(sizeof(Message));
         ssize_t bytes_received;
+        int message_count = 0;
+        size_t current_size = 0;
 
         // Receive messages until client disconnects
         while ((bytes_received = recv(new_socket, msg, sizeof(Message), 0)) > 0) {
-            // Send acknowledgment
-            send(new_socket, "OK", 2, 0);
+            current_size = msg->size;
+            
+            message_count++;
+            
+            // After receiving all messages for current size (warmup + measurement)
+            if (message_count == WARMUP_CYCLES + MEASUREMENT_CYCLES) {
+                send(new_socket, "OK", 2, 0);
+                message_count = 0;
+            }
         }
 
         close(new_socket);
         free(msg);
+        if (current_size == MAX_MSG_SIZE) {
+            break;
+        }
     }
 
     close(server_fd);
