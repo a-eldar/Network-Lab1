@@ -5,6 +5,16 @@ void print_usage(const char *program_name) {
     fprintf(stderr, "  port: Port number to listen on (default: %d)\n", DEFAULT_PORT);
     exit(EXIT_FAILURE);
 }
+ssize_t recv_all(int sock, void *buf, size_t len) {
+    size_t total = 0;
+    while (total < len) {
+        ssize_t n = recv(sock, (char*)buf + total, len - total, 0);
+        if (n <= 0) return n;
+        total += n;
+    }
+    return total;
+}
+
 
 int main(int argc, char *argv[]) {
     int server_fd, new_socket;
@@ -55,37 +65,55 @@ int main(int argc, char *argv[]) {
 
     printf("Server listening on port %d...\n", port);
 
+    // Accept new connection
+    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
+        perror("Accept failed");
+        exit(EXIT_FAILURE);
+    }
+
+    Message* msg = malloc(sizeof(Message));
+    //ssize_t bytes_received;
+    int message_count = 0;
+    size_t current_size = 1;
+
+    
+
+    // Receive messages until client disconnects
     while (1) {
-        // Accept new connection
-        if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
-            perror("Accept failed");
-            continue;
-        }
+        // Step 1: Read the size field
+        ssize_t n = recv_all(new_socket, &msg->size, sizeof(size_t));
+        if (n <= 0) break;
 
-        Message* msg = malloc(sizeof(Message));
-        ssize_t bytes_received;
-        int message_count = 0;
-        size_t current_size = 0;
-
-        // Receive messages until client disconnects
-        while ((bytes_received = recv(new_socket, msg, sizeof(Message), 0)) > 0) {
-            current_size = msg->size;
-            
-            message_count++;
-            
-            // After receiving all messages for current size (warmup + measurement)
-            if (message_count == WARMUP_CYCLES + MEASUREMENT_CYCLES) {
-                send(new_socket, "OK", 2, 0);
-                message_count = 0;
-            }
-        }
-
-        close(new_socket);
-        free(msg);
-        if (current_size == MAX_MSG_SIZE) {
+        // Safety check
+        if (msg->size > MAX_MSG_SIZE) {
+            fprintf(stderr, "Received message too large\n");
             break;
         }
+
+        // Step 2: Read the payload
+        n = recv_all(new_socket, msg->data, msg->size);
+        if (n <= 0) break;
+
+        message_count++;
+        printf("message_count: %d, size: %zu bytes\n", message_count, msg->size);
+
+        if (message_count == WARMUP_CYCLES + MEASUREMENT_CYCLES) {
+            send(new_socket, "OK", 2, 0);
+            message_count = 0;
+            current_size *= 2;
+            if (current_size > MAX_MSG_SIZE) break;
+        }
     }
+
+
+    
+    free(msg);
+    close(new_socket);
+
+    // if (current_size >= MAX_MSG_SIZE) {
+    //     break;
+    // }
+    
 
     close(server_fd);
     return 0;

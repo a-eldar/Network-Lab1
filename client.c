@@ -1,5 +1,6 @@
 #include "common.h"
 
+
 void print_usage(const char *program_name) {
     fprintf(stderr, "Usage: %s [host] [port]\n", program_name);
     fprintf(stderr, "  host: Server hostname or IP (default: %s)\n", DEFAULT_HOST);
@@ -65,10 +66,12 @@ int main(int argc, char *argv[]) {
     for (size_t size = 1; size <= MAX_MSG_SIZE; size *= 2) {
         msg->size = size;
         memset(msg->data, 'A', size); // Fill with test data
-
+        // print the message data byte by 
         // Send warmup messages
-        for (int i = 0; i < MEASUREMENT_CYCLES; i++) {
+        for (int i = 0; i < WARMUP_CYCLES; i++) {
             send(sock, msg, sizeof(size_t) + size, 0);
+            // sleep for 0.05 to allow server to process
+            
         }
         // Start timing after warm-up
         clock_gettime(CLOCK_MONOTONIC, &start);
@@ -76,6 +79,8 @@ int main(int argc, char *argv[]) {
         // Send all messages (measurement)
         for (int i = 0; i < MEASUREMENT_CYCLES; i++) {
             send(sock, msg, sizeof(size_t) + size, 0);
+            // sleep for 0.05 to allow server to process
+            
         }
 
         // Wait for single OK response
