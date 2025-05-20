@@ -13,7 +13,7 @@
 
 #define DEFAULT_PORT 8080
 #define DEFAULT_HOST "127.0.0.1"
-#define MAX_MSG_SIZE (1024 * 1024 * 1024)  // 1MB
+#define MAX_MSG_SIZE (1024 * 1024 * 1024)  // 1GB
 #define WARMUP_CYCLES 101            // Number of warm-up cycles before actual measurements
 #define MEASUREMENT_CYCLES 509        // Number of measurement cycles per message size
 #define BITS_IN_BYTE 8.0
