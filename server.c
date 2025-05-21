@@ -95,7 +95,6 @@ int main(int argc, char *argv[]) {
         if (n <= 0) break;
 
         message_count++;
-        printf("message_count: %d, size: %zu bytes\n", message_count, msg->size);
 
         if (message_count == WARMUP_CYCLES + MEASUREMENT_CYCLES) {
             send(new_socket, "OK", 2, 0);
